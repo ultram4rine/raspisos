@@ -1,38 +1,8 @@
 package parsing
 
 import (
-	"fmt"
 	"strings"
 )
-
-func runeIndex(text []rune, substr string) int {
-	subrunes := []rune(substr)
-	for i := range text {
-		found := true
-		for j := range subrunes {
-			if text[i+j] != subrunes[j] {
-				found = false
-				break
-			}
-		}
-		if found {
-			return i
-		}
-	}
-	return -1
-}
-
-func strSub(str string, i, j int) (substr string) {
-	runes := []rune(str)
-	substr = string(runes[i:j])
-	return substr
-}
-
-func strErase(str string, i, j int) (strerased string) {
-	runes := []rune(str)
-	strerased = string(append(runes[:i], runes[j:]...))
-	return strerased
-}
 
 //XMLStruct is a struct for parsing XML file from https://sgu.ru/schedule/...
 //This struct was generated on https://onlinetool.io/xmltogo, unnecessary fields was deleted
@@ -153,8 +123,6 @@ func formatLesson(s string) (l Lesson) {
 		k = strings.IndexRune(s, '\n')
 		l.Classroom = s[:k]
 		s = s[k+1:]
-		fmt.Println(s)
-		fmt.Println(len(s))
 	}
 
 	return l
