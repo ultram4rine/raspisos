@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"repos/bot/parsing"
-	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -59,13 +58,14 @@ func main() {
 		}*/
 		//TODO: webDesign and translator option
 		//webDesign  bool
-		//translator boll
+		//translator bool
 		//TODO: subGroup numbers
 		//subGroupNum
 		//englishGroupNum
 		//translatorGroupNum
 		//TODO: selection of group and faculty
 		//TODO: schedule type "session"
+		//FIXME: non full output for multiply lessons in one time
 
 		faculty     = "mm"
 		group       = "211"
@@ -86,9 +86,6 @@ func main() {
 	bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	//u := tgbotapi.NewUpdate(0)
-	//u.Timeout = 60
-	//updates, err := bot.GetUpdatesChan(u)
 	updates := bot.ListenForWebhook("/" + bot.Token)
 
 	http.HandleFunc("/", handler)
@@ -102,9 +99,14 @@ func main() {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 			day := update.Message.Command()
-			msg.Text, err = MakeMessage(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
-			if err != nil {
-				log.Println(err)
+			switch day {
+			case "start":
+				msg.Text = "Let's get it"
+			default:
+				msg.Text, err = MakeMessage(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
+				if err != nil {
+					log.Println(err)
+				}
 			}
 			msg.ParseMode = "markdown"
 			bot.Send(msg)
@@ -139,31 +141,33 @@ func MakeMessage(filepath, address, day string, xmlschedule parsing.XMLStruct) (
 		return "", err
 	}
 
-	var (
-		d       int
-		rowsize = len(xmlschedule.Worksheet[0].Table.Row)
-		lessons = parsing.MakeLesson(xmlschedule)
-	)
+	week := parsing.MakeWeek(xmlschedule)
 
-	switch day {
-	case "monday":
-		d = 1
-	case "tuesday":
-		d = 2
-	case "wednesday":
-		d = 3
-	case "thursday":
-		d = 4
-	case "friday":
-		d = 5
-	case "saturday":
-		d = 6
-	}
+	for i := 1; i < 9; i++ {
+		l := parsing.MakeLesson(week, day, i)
+		msgtext += "*" + l.Time + "*\n"
 
-	for i := 2; i < rowsize; i++ {
-		msgtext += "*" + lessons[i][0].Data + "*" + "\n"
-		msgtext = strings.Replace(msgtext, "- ", "-", -1)
-		msgtext += lessons[i][d].Data
+		if l.Name != "" {
+			if l.TypeofWeek != "" {
+				msgtext += "*Неделя:* " + l.TypeofWeek + "\n"
+			}
+
+			if l.TypeofLesson != "" {
+				msgtext += "*Занятие:* " + l.TypeofLesson + "\n"
+			}
+
+			msgtext += "*Предмет:* " + l.Name + "\n"
+
+			if l.SubGroup != "" {
+				msgtext += "*Подгруппа:* " + l.SubGroup + "\n"
+			}
+
+			msgtext += "*Преподаватель:* " + l.Teacher + "\n"
+
+			msgtext += "*Аудитория:* " + l.Classroom + "\n\n"
+		} else {
+			msgtext += "_Пары нет_\n\n"
+		}
 	}
 
 	err = os.Remove(filepath)
