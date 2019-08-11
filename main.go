@@ -19,35 +19,14 @@ func handler(resp http.ResponseWriter, _ *http.Request) {
 	resp.Write([]byte("Raspisos here"))
 }
 
-//Config struct contains bot's token
-type Config struct {
+var conf struct {
 	TgBotToken string `json:"TelegramBotToken"`
-}
-
-var conf Config
-
-func makeConfig(path string) error {
-	conffile, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-
-	confdata, err := ioutil.ReadAll(conffile)
-	if err != nil {
-		return err
-	}
-	err = conffile.Close()
-
-	err = json.Unmarshal(confdata, &conf)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func main() {
 	var (
+		confpath = "conf.json"
+
 		/*facultiess = [...]string{
 			"bf", "gf", "gl",
 			"idpo", "ii", "imo",
@@ -75,9 +54,20 @@ func main() {
 		xmlschedule parsing.XMLStruct
 	)
 
-	err := makeConfig("conf.json")
+	confFile, err := os.Open(confpath)
 	if err != nil {
-		log.Fatal("Error with making config:", err)
+		log.Fatal("Error opening config file:", err)
+	}
+
+	confData, err := ioutil.ReadAll(confFile)
+	if err != nil {
+		log.Fatal("Error reading config file:", err)
+	}
+	err = confFile.Close()
+
+	err = json.Unmarshal(confData, &conf)
+	if err != nil {
+		log.Fatal("Error unmarshalling config:", err)
 	}
 
 	bot, err := tgbotapi.NewBotAPI(conf.TgBotToken)
