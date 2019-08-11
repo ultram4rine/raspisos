@@ -9,7 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"repos/bot/parsing"
+
+	"github.com/ultram4rine/raspisos/parsing"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
