@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
+	"errors"
 	"io"
 	"io/ioutil"
 	"log"
@@ -194,7 +194,7 @@ func DownloadFileFromURL(filepath string, url string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
+		return errors.New("bad status: " + resp.Status)
 	}
 
 	_, err = io.Copy(out, resp.Body)
