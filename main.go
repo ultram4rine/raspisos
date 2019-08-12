@@ -26,6 +26,7 @@ var conf struct {
 func main() {
 	var (
 		confpath = "conf.json"
+		days     = []string{"monday", "tuesday", "wednesday", "thursday", "friday", "saturday"}
 
 		/*facultiess = [...]string{
 			"bf", "gf", "gl",
@@ -94,15 +95,29 @@ func main() {
 			case "start":
 				msg.Text = "Let's get it"
 			default:
-				msg.Text, err = MakeMessage(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
-				if err != nil {
-					log.Println(err)
+				if contains(days, day) {
+					msg.Text, err = MakeMessage(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
+					if err != nil {
+						log.Println(err)
+					}
+				} else {
+					msg.Text = "Unknown command, type \"/help\" for help"
 				}
 			}
 			msg.ParseMode = "markdown"
 			bot.Send(msg)
 		}
 	}
+}
+
+func contains(slice []string, x string) bool {
+	for _, v := range slice {
+		if x == v {
+			return true
+		}
+	}
+
+	return false
 }
 
 //MakeMessage make message to answer with schedule
