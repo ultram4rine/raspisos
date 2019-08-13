@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	abbr "github.com/ultram4rine/raspisos/abbreviation"
 )
 
 //XMLStruct is a struct for parsing XML file from https://sgu.ru/schedule/...
@@ -28,6 +29,7 @@ type XMLStruct struct {
 type Fac struct {
 	Name string
 	Link string
+	Abbr string
 }
 
 //Lesson is a struct describing a lesson
@@ -208,6 +210,7 @@ func GetFacs() ([]Fac, error) {
 		fac.Name = s.Find("a").Text()
 		href, _ := s.Find("a").Attr("href")
 		fac.Link = strings.Split(href, "/")[2]
+		fac.Abbr = abbr.Faculty(fac.Name)
 		faculties = append(faculties, fac)
 	})
 
