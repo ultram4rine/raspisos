@@ -1,7 +1,11 @@
 package parsing
 
 import (
+	"fmt"
+	"net/http"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 //XMLStruct is a struct for parsing XML file from https://sgu.ru/schedule/...
@@ -18,6 +22,12 @@ type XMLStruct struct {
 			} `xml:"Row"`
 		} `xml:"Table"`
 	} `xml:"Worksheet"`
+}
+
+//Fac is a struct describing faculty
+type Fac struct {
+	Name string
+	Link string
 }
 
 //Lesson is a struct describing a lesson
@@ -169,4 +179,37 @@ func MakeLesson(week Week, day string, number int) (l Lesson) {
 	}
 
 	return l
+}
+
+//GetFacs gets all faculties
+func GetFacs() ([]Fac, error) {
+	var (
+		addr      = "https://www.sgu.ru/schedule"
+		fac       Fac
+		faculties []Fac
+	)
+
+	res, err := http.Get(addr)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("Status code error: %d %s", res.StatusCode, res.Status)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	doc.Find(".panes_item__type_group ul li").Each(func(i int, s *goquery.Selection) {
+		fac.Name = s.Find("a").Text()
+		href, _ := s.Find("a").Attr("href")
+		fac.Link = strings.Split(href, "/")[2]
+		faculties = append(faculties, fac)
+	})
+
+	return faculties, nil
 }

@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/ultram4rine/raspisos/parsing"
 
@@ -27,16 +28,7 @@ func main() {
 	var (
 		confpath = "conf.json"
 		days     = []string{"monday", "tuesday", "wednesday", "thursday", "friday", "saturday"}
-
-		/*facultiess = [...]string{
-			"bf", "gf", "gl",
-			"idpo", "ii", "imo",
-			"ifk", "ifg", "ih",
-			"mm", "sf", "fi", "knt",
-			"fn", "fnp", "fps", "fppso",
-			"ff", "fp", "ef",
-			"uf", "kgl", "cre",
-		}*/
+		userMap  = make(map[int]string)
 		//TODO: webDesign and translator option
 		//webDesign  bool
 		//translator bool
@@ -48,12 +40,16 @@ func main() {
 		//TODO: schedule type "session"
 		//FIXME: non full output for multiply lessons in one time
 
-		faculty     = "mm"
+		faculty     string
 		group       = "211"
 		schedule    = "lesson"
-		address     = "https://www.sgu.ru/schedule/" + faculty + "/do/" + group + "/" + schedule
 		xmlschedule parsing.XMLStruct
 	)
+
+	faculties, err := parsing.GetFacs()
+	if err != nil {
+		log.Println("Error getting faculties:", err)
+	}
 
 	confFile, err := os.Open(confpath)
 	if err != nil {
@@ -80,44 +76,64 @@ func main() {
 
 	updates := bot.ListenForWebhook("/" + bot.Token)
 
+	var (
+		btn  tgbotapi.InlineKeyboardButton
+		row  []tgbotapi.InlineKeyboardButton
+		rows [][]tgbotapi.InlineKeyboardButton
+	)
+	for i, f := range faculties {
+		if i%3 != 0 || i == 0 {
+			btn = tgbotapi.NewInlineKeyboardButtonData(f.Name, f.Link+"&fac")
+			row = append(row, btn)
+		} else {
+			rows = append(rows, row)
+			row = []tgbotapi.InlineKeyboardButton{}
+			btn = tgbotapi.NewInlineKeyboardButtonData(f.Name, f.Link+"&fac")
+			row = append(row, btn)
+		}
+	}
+	rows = append(rows, row)
+
 	http.HandleFunc("/", handler)
 	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 
 	//Bot answers
 	for update := range updates {
-		if update.Message == nil {
-			continue
-		} else {
+		if update.Message != nil {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 			day := update.Message.Command()
 			switch day {
 			case "start":
-				numericKeyboard := tgbotapi.NewReplyKeyboard(
-					tgbotapi.NewKeyboardButtonRow(
-						tgbotapi.NewKeyboardButton("1"),
-						tgbotapi.NewKeyboardButton("2"),
-						tgbotapi.NewKeyboardButton("3"),
-					),
-					tgbotapi.NewKeyboardButtonRow(
-						tgbotapi.NewKeyboardButton("4"),
-						tgbotapi.NewKeyboardButton("5"),
-						tgbotapi.NewKeyboardButton("6"),
-					),
-				)
-				msg.ReplyMarkup = numericKeyboard
+				keyboard := tgbotapi.NewInlineKeyboardMarkup()
+				keyboard.InlineKeyboard = rows
+
+				msg.ReplyMarkup = keyboard
+				msg.Text = "Choose your faculty"
 			default:
 				if contains(days, day) {
+					faculty = userMap[update.Message.From.ID]
+					log.Println(faculty)
+					address := "https://www.sgu.ru/schedule/" + faculty + "/do/" + group + "/" + schedule
+					log.Println(address)
 					msg.Text, err = makeLessonMsg(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
 					if err != nil {
 						log.Println(err)
 					}
 				} else {
-					msg.Text = "Unknown command, type \"*/help*\" for help"
+					msg.Text = "Unknown command, type \"/help\" for help"
 				}
 			}
 			msg.ParseMode = "markdown"
 			bot.Send(msg)
+		}
+		if update.CallbackQuery != nil {
+			ans := update.CallbackQuery.Data
+			typo := strings.Split(ans, "&")[1]
+			if typo == "fac" {
+				userMap[update.CallbackQuery.From.ID] = strings.Split(ans, "&")[0]
+			}
+			bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data))
 		}
 	}
 }
