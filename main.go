@@ -93,15 +93,27 @@ func main() {
 			day := update.Message.Command()
 			switch day {
 			case "start":
-				msg.Text = "Let's get it"
+				numericKeyboard := tgbotapi.NewReplyKeyboard(
+					tgbotapi.NewKeyboardButtonRow(
+						tgbotapi.NewKeyboardButton("1"),
+						tgbotapi.NewKeyboardButton("2"),
+						tgbotapi.NewKeyboardButton("3"),
+					),
+					tgbotapi.NewKeyboardButtonRow(
+						tgbotapi.NewKeyboardButton("4"),
+						tgbotapi.NewKeyboardButton("5"),
+						tgbotapi.NewKeyboardButton("6"),
+					),
+				)
+				msg.ReplyMarkup = numericKeyboard
 			default:
 				if contains(days, day) {
-					msg.Text, err = MakeMessage(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
+					msg.Text, err = makeLessonMsg(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
 					if err != nil {
 						log.Println(err)
 					}
 				} else {
-					msg.Text = "Unknown command, type \"/help\" for help"
+					msg.Text = "Unknown command, type \"*/help*\" for help"
 				}
 			}
 			msg.ParseMode = "markdown"
@@ -120,8 +132,8 @@ func contains(slice []string, x string) bool {
 	return false
 }
 
-//MakeMessage make message to answer with schedule
-func MakeMessage(filepath, address, day string, xmlschedule parsing.XMLStruct) (msgtext string, err error) {
+//makeLessonMsg make message to answer with schedule
+func makeLessonMsg(filepath, address, day string, xmlschedule parsing.XMLStruct) (msgtext string, err error) {
 	err = DownloadFileFromURL(filepath, address)
 	if err != nil {
 		return "", err
