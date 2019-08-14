@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ultram4rine/raspisos/keyboards"
@@ -28,7 +29,7 @@ var conf struct {
 func main() {
 	var (
 		confpath = "conf.json"
-		days     = []string{"monday", "tuesday", "wednesday", "thursday", "friday", "saturday"}
+		days     = []string{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
 		userMap  = make(map[int]string)
 		//TODO: webDesign and translator option
 		//webDesign  bool
@@ -82,38 +83,57 @@ func main() {
 
 	//Bot answers
 	for update := range updates {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+
 		if update.Message != nil {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-			day := update.Message.Command()
-			switch day {
-			case "start":
-				keyboard := keyboards.CreateMainKeyboard()
 
-				msg.ReplyMarkup = keyboard
-				msg.Text = "Started"
-			default:
-				if contains(days, day) {
-					faculty = userMap[update.Message.From.ID]
-					log.Println(faculty)
-					address := "https://www.sgu.ru/schedule/" + faculty + "/do/" + group + "/" + schedule
-					log.Println(address)
-					msg.Text, err = makeLessonMsg(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
-					if err != nil {
-						log.Println(err)
-					}
-				} else {
+			cmd := update.Message.Command()
+			if cmd != "" {
+				switch cmd {
+				case "start":
+					keyboard := keyboards.CreateMainKeyboard()
+
+					msg.ReplyMarkup = keyboard
+					msg.Text = "Started"
+				case "help":
+					msg.Text = "Help message"
+				default:
 					msg.Text = "Unknown command, type \"/help\" for help"
 				}
+			} else {
+				text := update.Message.Text
+
+				e1, _ := strconv.ParseInt(strings.TrimPrefix("\\U0001F4DA", "\\U"), 16, 32)
+
+				switch text {
+				case string(e1) + " Занятия":
+					keyboard := keyboards.CreateDaysKeyboard()
+
+					msg.ReplyMarkup = keyboard
+					msg.Text = "Выберите день недели"
+				}
 			}
+
 			msg.ParseMode = "markdown"
 			bot.Send(msg)
 		}
 		if update.CallbackQuery != nil {
 			ans := update.CallbackQuery.Data
 			typo := strings.Split(ans, "&")[1]
-			if typo == "fac" {
+			switch typo {
+			case "fac":
 				userMap[update.CallbackQuery.From.ID] = strings.Split(ans, "&")[0]
+			case "group":
+				userMap[update.CallbackQuery.From.ID] += strings.Split(ans, "&")[0]
+			case "day":
+				faculty = userMap[update.Message.From.ID]
+				address := "https://www.sgu.ru/schedule/" + faculty + "/do/" + group + "/" + schedule
+
+				msg.Text, err = makeLessonMsg(schedule+"_"+faculty+"_"+group+".xml", address, strings.Split(ans, "&")[0], xmlschedule)
+				if err != nil {
+					log.Println(err)
+				}
 			}
 			bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data))
 		}

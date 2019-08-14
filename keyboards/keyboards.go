@@ -47,3 +47,20 @@ func CreateFacsKeyboard(faculties []parsing.Fac) tgbotapi.InlineKeyboardMarkup {
 
 	return keyboard
 }
+
+func CreateDaysKeyboard() tgbotapi.InlineKeyboardMarkup {
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Понедельник", "Понедельник&day"),
+			tgbotapi.NewInlineKeyboardButtonData("Вторник", "Вторник&day"),
+			tgbotapi.NewInlineKeyboardButtonData("Среда", "Среда&day"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Четверг", "Четверг&day"),
+			tgbotapi.NewInlineKeyboardButtonData("Пятница", "Пятница&day"),
+			tgbotapi.NewInlineKeyboardButtonData("Суббота", "Суббота&day"),
+		),
+	)
+
+	return keyboard
+}

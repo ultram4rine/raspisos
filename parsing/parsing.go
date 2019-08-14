@@ -72,17 +72,17 @@ func (week Week) makeTime() (d Day) {
 
 func (week Week) makeDay(day string) (d Day) {
 	switch day {
-	case "monday":
+	case "Понедельник":
 		d = week.Days[1]
-	case "tuesday":
+	case "Вторник":
 		d = week.Days[2]
-	case "wednesday":
+	case "Среда":
 		d = week.Days[3]
-	case "thursday":
+	case "Четверг":
 		d = week.Days[4]
-	case "friday":
+	case "Пятница":
 		d = week.Days[5]
-	case "saturday":
+	case "Суббота":
 		d = week.Days[6]
 	}
 
