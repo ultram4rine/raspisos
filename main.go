@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ultram4rine/raspisos/keyboards"
 	"github.com/ultram4rine/raspisos/parsing"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -76,24 +77,6 @@ func main() {
 
 	updates := bot.ListenForWebhook("/" + bot.Token)
 
-	var (
-		btn  tgbotapi.InlineKeyboardButton
-		row  []tgbotapi.InlineKeyboardButton
-		rows [][]tgbotapi.InlineKeyboardButton
-	)
-	for i, f := range faculties {
-		if i%3 != 0 || i == 0 {
-			btn = tgbotapi.NewInlineKeyboardButtonData(f.Name, f.Link+"&fac")
-			row = append(row, btn)
-		} else {
-			rows = append(rows, row)
-			row = []tgbotapi.InlineKeyboardButton{}
-			btn = tgbotapi.NewInlineKeyboardButtonData(f.Name, f.Link+"&fac")
-			row = append(row, btn)
-		}
-	}
-	rows = append(rows, row)
-
 	http.HandleFunc("/", handler)
 	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 
@@ -105,11 +88,10 @@ func main() {
 			day := update.Message.Command()
 			switch day {
 			case "start":
-				keyboard := tgbotapi.NewInlineKeyboardMarkup()
-				keyboard.InlineKeyboard = rows
+				keyboard := keyboards.CreateMainKeyboard()
 
 				msg.ReplyMarkup = keyboard
-				msg.Text = "Choose your faculty"
+				msg.Text = "Started"
 			default:
 				if contains(days, day) {
 					faculty = userMap[update.Message.From.ID]
