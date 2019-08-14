@@ -29,8 +29,8 @@ var conf struct {
 func main() {
 	var (
 		confpath = "conf.json"
-		//days     = []string{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
-		userMap = make(map[int]string)
+		days     = []string{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
+		userMap  = make(map[int]string)
 		//TODO: webDesign and translator option
 		//webDesign  bool
 		//translator bool
@@ -129,12 +129,15 @@ func main() {
 			case "group":
 				userMap[update.CallbackQuery.From.ID] += strings.Split(ans, "&")[0]
 			case "day":
-				faculty = userMap[update.Message.From.ID]
-				address := "https://www.sgu.ru/schedule/" + faculty + "/do/" + group + "/" + schedule
+				day := strings.Split(ans, "&")[0]
+				if contains(days, day) {
+					faculty = userMap[update.Message.From.ID]
+					address := "https://www.sgu.ru/schedule/" + faculty + "/do/" + group + "/" + schedule
 
-				msg.Text, err = makeLessonMsg(schedule+"_"+faculty+"_"+group+".xml", address, strings.Split(ans, "&")[0], xmlschedule)
-				if err != nil {
-					log.Println(err)
+					msg.Text, err = makeLessonMsg(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
+					if err != nil {
+						log.Println(err)
+					}
 				}
 			}
 			bot.Send(msg)
