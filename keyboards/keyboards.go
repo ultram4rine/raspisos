@@ -1,15 +1,21 @@
 package keyboards
 
 import (
+	"strconv"
+	"strings"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/ultram4rine/raspisos/parsing"
 )
 
 func CreateMainKeyboard() tgbotapi.ReplyKeyboardMarkup {
+	e1, _ := strconv.ParseInt(strings.TrimPrefix("\\U0001F4DA", "\\U"), 16, 32)
+	e2, _ := strconv.ParseInt(strings.TrimPrefix("\\U0001F4DD", "\\U"), 16, 32)
+
 	keyboard := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("U+1F4DA Занятия"),
-			tgbotapi.NewKeyboardButton("U+1F4DD Сессия"),
+			tgbotapi.NewKeyboardButton(string(e1)+" Занятия"),
+			tgbotapi.NewKeyboardButton(string(e2)+" Сессия"),
 		),
 	)
 
