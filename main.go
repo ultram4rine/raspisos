@@ -29,8 +29,8 @@ var conf struct {
 func main() {
 	var (
 		confpath = "conf.json"
-		days     = []string{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
-		userMap  = make(map[int]string)
+		//days     = []string{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
+		userMap = make(map[int]string)
 		//TODO: webDesign and translator option
 		//webDesign  bool
 		//translator bool
@@ -48,10 +48,10 @@ func main() {
 		xmlschedule parsing.XMLStruct
 	)
 
-	faculties, err := parsing.GetFacs()
+	/*faculties, err := parsing.GetFacs()
 	if err != nil {
 		log.Println("Error getting faculties:", err)
-	}
+	}*/
 
 	confFile, err := os.Open(confpath)
 	if err != nil {
