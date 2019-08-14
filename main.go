@@ -83,10 +83,10 @@ func main() {
 
 	//Bot answers
 	for update := range updates {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-
 		if update.Message != nil {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 
 			cmd := update.Message.Command()
 			if cmd != "" {
@@ -119,6 +119,8 @@ func main() {
 			bot.Send(msg)
 		}
 		if update.CallbackQuery != nil {
+			msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "")
+
 			ans := update.CallbackQuery.Data
 			typo := strings.Split(ans, "&")[1]
 			switch typo {
@@ -135,7 +137,7 @@ func main() {
 					log.Println(err)
 				}
 			}
-			bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data))
+			bot.Send(msg)
 		}
 	}
 }
