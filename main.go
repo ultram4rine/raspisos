@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ultram4rine/raspisos/keyboards"
 	"github.com/ultram4rine/raspisos/parsing"
@@ -77,6 +78,11 @@ func main() {
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	updates := bot.ListenForWebhook("/" + bot.Token)
+
+	_, err = time.LoadLocation("Europe/Saratov")
+	if err != nil {
+		log.Printf("Error getting time zone: %s", err)
+	}
 
 	http.HandleFunc("/", handler)
 	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
