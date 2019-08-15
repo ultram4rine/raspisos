@@ -1,21 +1,26 @@
 package keyboards
 
 import (
-	"strconv"
-	"strings"
+	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/ultram4rine/raspisos/emoji"
 	"github.com/ultram4rine/raspisos/parsing"
 )
 
 func CreateMainKeyboard() tgbotapi.ReplyKeyboardMarkup {
-	e1, _ := strconv.ParseInt(strings.TrimPrefix("\\U0001F4DA", "\\U"), 16, 32)
-	e2, _ := strconv.ParseInt(strings.TrimPrefix("\\U0001F4DD", "\\U"), 16, 32)
+	books, memo, bell, err := emoji.Parse()
+	if err != nil {
+		log.Printf("Error parsing emojies: %s", err)
+	}
 
 	keyboard := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton(string(e1)+" Занятия"),
-			tgbotapi.NewKeyboardButton(string(e2)+" Сессия"),
+			tgbotapi.NewKeyboardButton(books+" Занятия"),
+			tgbotapi.NewKeyboardButton(memo+" Сессия"),
+		),
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton(bell+"Уведомления"),
 		),
 	)
 
