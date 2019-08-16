@@ -13,11 +13,20 @@ func Faculty(name string) string {
 		return string(r1[0:3]) + "-" + string(r2[0:3])
 	} else if parts[len(parts)-1] == "факультет" {
 		r := []rune(parts[0])
-		switch strings.ContainsAny(string(r[3]), "аоэиуыеёюя") {
-		case true:
-			return string(r[0:2]) + "фак"
-		case false:
-			return string(r[0:3]) + "фак"
+		if string(r[0:3]) == "Гео" {
+			switch string(r[3]) {
+			case "г":
+				return string(r[0:7])
+			case "л":
+				return string(r[0:6])
+			}
+		} else {
+			switch strings.ContainsAny(string(r[4]), "аэиуыеёюя") {
+			case true:
+				return string(r[0:2]) + "фак"
+			case false:
+				return string(r[0:3]) + "фак"
+			}
 		}
 	} else if parts[len(parts)-1] == "колледж" {
 		r := []rune(parts[0])
