@@ -19,6 +19,9 @@ func Faculty(name string) string {
 		case false:
 			return string(r[0:3]) + "фак"
 		}
+	} else if parts[len(parts)-1] == "колледж" {
+		r := []rune(parts[0])
+		return string(r[0:3]) + "кол"
 	} else if parts[0] == "Институт" {
 		var (
 			runes [][]rune
