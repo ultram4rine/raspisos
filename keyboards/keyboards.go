@@ -20,6 +20,7 @@ func CreateMainKeyboard() tgbotapi.ReplyKeyboardMarkup {
 			tgbotapi.NewKeyboardButton(memo+" Сессия"),
 		),
 		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("Изменить группу"),
 			tgbotapi.NewKeyboardButton(bell+"Уведомления"),
 		),
 	)
