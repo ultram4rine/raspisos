@@ -32,6 +32,7 @@ func main() {
 		confpath = "conf.json"
 		days     = []string{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
 		userMap  = make(map[int]string)
+		//TODO: Save faculties and groups of user to DB or json files
 		//TODO: webDesign and translator option
 		//webDesign  bool
 		//translator bool
@@ -44,15 +45,15 @@ func main() {
 		//FIXME: non full output for multiply lessons in one time
 
 		faculty     string
-		group       = "211"
+		group       string
 		schedule    = "lesson"
 		xmlschedule parsing.XMLStruct
 	)
 
-	/*faculties, err := parsing.GetFacs()
+	faculties, err := parsing.GetFacs()
 	if err != nil {
 		log.Println("Error getting faculties:", err)
-	}*/
+	}
 
 	confFile, err := os.Open(confpath)
 	if err != nil {
@@ -118,6 +119,11 @@ func main() {
 
 					msg.ReplyMarkup = keyboard
 					msg.Text = "Выберите день недели"
+				case "Изменить группу":
+					keyboard := keyboards.CreateFacsKeyboard(faculties)
+
+					msg.ReplyMarkup = keyboard
+					msg.Text = "Выберите факультет"
 				}
 			}
 
@@ -132,21 +138,35 @@ func main() {
 			switch typo {
 			case "fac":
 				userMap[update.CallbackQuery.From.ID] = strings.Split(ans, "&")[0]
+				log.Println(userMap[update.CallbackQuery.From.ID])
+				msgedit := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, "Выберите группу")
+				msgedit.ReplyMarkup = tgbotapi.NewEditMessageReplyMarkup(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, tgbotapi.NewInlineKeyboardMarkup(
+					tgbotapi.NewInlineKeyboardRow(
+						tgbotapi.NewInlineKeyboardButtonData("211", "211&group"),
+					),
+				)).ReplyMarkup
+				bot.Send(msgedit)
 			case "group":
-				userMap[update.CallbackQuery.From.ID] += strings.Split(ans, "&")[0]
+				userMap[update.CallbackQuery.From.ID] += "&" + strings.Split(ans, "&")[0]
+				log.Println(userMap[update.CallbackQuery.From.ID])
+				msgedit := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, "Done")
+				bot.Send(msgedit)
 			case "day":
 				day := strings.Split(ans, "&")[0]
 				if contains(days, day) {
-					faculty = userMap[update.Message.From.ID]
+					faculty = strings.Split(userMap[update.CallbackQuery.From.ID], "&")[0]
+					group = strings.Split(userMap[update.CallbackQuery.From.ID], "&")[1]
 					address := "https://www.sgu.ru/schedule/" + faculty + "/do/" + group + "/" + schedule
 
 					msg.Text, err = makeLessonMsg(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
 					if err != nil {
 						log.Println(err)
 					}
+
+					msg.ParseMode = "markdown"
+					bot.Send(msg)
 				}
 			}
-			bot.Send(msg)
 		}
 	}
 }
