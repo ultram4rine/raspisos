@@ -19,10 +19,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-func handler(resp http.ResponseWriter, _ *http.Request) {
-	resp.Write([]byte("Raspisos here"))
-}
-
 func main() {
 	var (
 		confPath = "conf.json"
@@ -60,20 +56,23 @@ func main() {
 	if err != nil {
 		log.Fatal("Error with creaction of the bot: ", err)
 	}
+
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+
 	bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	updates := bot.ListenForWebhook("/" + bot.Token)
+	updates, err := bot.GetUpdatesChan(u)
+	if err != nil {
+		log.Fatal("Error getting updates channel of the bot: ", err)
+	}
 
 	_, err = time.LoadLocation("Europe/Saratov")
 	if err != nil {
 		log.Printf("Error getting time zone: %s", err)
 	}
 
-	http.HandleFunc("/", handler)
-	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
-
-	//Bot answers
 	for update := range updates {
 		if update.Message != nil {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
