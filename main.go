@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"io"
@@ -16,6 +15,7 @@ import (
 	"github.com/ultram4rine/raspisos/keyboards"
 	"github.com/ultram4rine/raspisos/parsing"
 
+	"github.com/json-iterator/go"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
@@ -49,6 +49,8 @@ func main() {
 		schedule    = "lesson"
 		xmlschedule parsing.XMLStruct
 	)
+
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	faculties, err := parsing.GetFacs()
 	if err != nil {
