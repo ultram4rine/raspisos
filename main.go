@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ultram4rine/raspisos/config"
 	"github.com/ultram4rine/raspisos/keyboards"
 	"github.com/ultram4rine/raspisos/parsing"
 
-	"github.com/json-iterator/go"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
@@ -23,13 +23,9 @@ func handler(resp http.ResponseWriter, _ *http.Request) {
 	resp.Write([]byte("Raspisos here"))
 }
 
-var conf struct {
-	TgBotToken string `json:"TelegramBotToken"`
-}
-
 func main() {
 	var (
-		confpath = "conf.json"
+		confPath = "conf.json"
 		days     = []string{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
 		userMap  = make(map[int]string)
 		//TODO: Save faculties and groups of user to DB or json files
@@ -50,30 +46,17 @@ func main() {
 		xmlschedule parsing.XMLStruct
 	)
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	err := config.ParseConfig(confPath)
+	if err != nil {
+		log.Fatal("Error parsing config: ", err)
+	}
 
 	faculties, err := parsing.GetFacs()
 	if err != nil {
 		log.Println("Error getting faculties:", err)
 	}
 
-	confFile, err := os.Open(confpath)
-	if err != nil {
-		log.Fatal("Error opening config file:", err)
-	}
-
-	confData, err := ioutil.ReadAll(confFile)
-	if err != nil {
-		log.Fatal("Error reading config file:", err)
-	}
-	err = confFile.Close()
-
-	err = json.Unmarshal(confData, &conf)
-	if err != nil {
-		log.Fatal("Error unmarshalling config:", err)
-	}
-
-	bot, err := tgbotapi.NewBotAPI(conf.TgBotToken)
+	bot, err := tgbotapi.NewBotAPI(config.Conf.TgBotToken)
 	if err != nil {
 		log.Fatal("Error with creaction of the bot: ", err)
 	}
