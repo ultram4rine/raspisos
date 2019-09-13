@@ -54,6 +54,52 @@ func CreateFacsKeyboard(faculties []parsing.Fac) tgbotapi.InlineKeyboardMarkup {
 	return keyboard
 }
 
+func CreateGroupsKeyboard(facLink, educationType string, educationTypes []string) *tgbotapi.InlineKeyboardMarkup {
+	var (
+		btn  tgbotapi.InlineKeyboardButton
+		row  []tgbotapi.InlineKeyboardButton
+		rows [][]tgbotapi.InlineKeyboardButton
+	)
+
+	groups, _ := parsing.GetGroups(facLink, educationType)
+
+	for i, g := range groups {
+		if i%3 != 0 || i == 0 {
+			btn = tgbotapi.NewInlineKeyboardButtonData(g, g+"&group")
+			row = append(row, btn)
+		} else {
+			rows = append(rows, row)
+			row = []tgbotapi.InlineKeyboardButton{}
+			btn = tgbotapi.NewInlineKeyboardButtonData(g, g+"&group")
+			row = append(row, btn)
+		}
+	}
+	rows = append(rows, row)
+
+	row = []tgbotapi.InlineKeyboardButton{}
+	for i, t := range educationTypes {
+		if t == educationType {
+			continue
+		} else {
+			if i%3 != 0 || i == 0 {
+				btn = tgbotapi.NewInlineKeyboardButtonData(t, t+"&education")
+				row = append(row, btn)
+			} else {
+				rows = append(rows, row)
+				row = []tgbotapi.InlineKeyboardButton{}
+				btn = tgbotapi.NewInlineKeyboardButtonData(t, t+"&education")
+				row = append(row, btn)
+			}
+		}
+	}
+	rows = append(rows, row)
+
+	keyboard := tgbotapi.NewInlineKeyboardMarkup()
+	keyboard.InlineKeyboard = rows
+
+	return &keyboard
+}
+
 func CreateDaysKeyboard() tgbotapi.InlineKeyboardMarkup {
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(

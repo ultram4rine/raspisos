@@ -122,13 +122,14 @@ func main() {
 			switch typo {
 			case "fac":
 				userMap[update.CallbackQuery.From.ID] = strings.Split(ans, "&")[0]
-				log.Println(userMap[update.CallbackQuery.From.ID])
-				msgedit := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, "Выберите группу")
-				msgedit.ReplyMarkup = tgbotapi.NewEditMessageReplyMarkup(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, tgbotapi.NewInlineKeyboardMarkup(
-					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("211", "211&group"),
-					),
-				)).ReplyMarkup
+
+				educationTypes, _ := parsing.GetTypesofEducation(strings.Split(ans, "&")[0])
+
+				keyboard := keyboards.CreateGroupsKeyboard(strings.Split(ans, "&")[0], educationTypes[0], educationTypes)
+
+				msgedit := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, "Образование: *"+strings.ToLower(educationTypes[0])+"*. Выберите группу")
+				msgedit.ReplyMarkup = keyboard
+				msgedit.ParseMode = "markdown"
 				bot.Send(msgedit)
 			case "group":
 				userMap[update.CallbackQuery.From.ID] += "&" + strings.Split(ans, "&")[0]
