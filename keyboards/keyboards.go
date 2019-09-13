@@ -3,9 +3,11 @@ package keyboards
 import (
 	"log"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/ultram4rine/raspisos/data"
 	"github.com/ultram4rine/raspisos/emoji"
-	"github.com/ultram4rine/raspisos/parsing"
+	"github.com/ultram4rine/raspisos/www"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 func CreateMainKeyboard() tgbotapi.ReplyKeyboardMarkup {
@@ -28,7 +30,7 @@ func CreateMainKeyboard() tgbotapi.ReplyKeyboardMarkup {
 	return keyboard
 }
 
-func CreateFacsKeyboard(faculties []parsing.Fac) tgbotapi.InlineKeyboardMarkup {
+func CreateFacsKeyboard(faculties []data.Fac) tgbotapi.InlineKeyboardMarkup {
 	var (
 		btn  tgbotapi.InlineKeyboardButton
 		row  []tgbotapi.InlineKeyboardButton
@@ -61,7 +63,7 @@ func CreateGroupsKeyboard(facLink, educationType string, educationTypes []string
 		rows [][]tgbotapi.InlineKeyboardButton
 	)
 
-	groups, _ := parsing.GetGroups(facLink, educationType)
+	groups, _ := www.GetGroups(facLink, educationType)
 
 	for i, g := range groups {
 		if i%3 != 0 || i == 0 {

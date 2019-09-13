@@ -1,12 +1,7 @@
-package parsing
+package schedule
 
 import (
-	"fmt"
-	"net/http"
 	"strings"
-
-	"github.com/PuerkitoBio/goquery"
-	abbr "github.com/ultram4rine/raspisos/abbreviation"
 )
 
 //XMLStruct is a struct for parsing XML file from https://sgu.ru/schedule/...
@@ -23,13 +18,6 @@ type XMLStruct struct {
 			} `xml:"Row"`
 		} `xml:"Table"`
 	} `xml:"Worksheet"`
-}
-
-//Fac is a struct describing faculty
-type Fac struct {
-	Name string
-	Link string
-	Abbr string
 }
 
 //Lesson is a struct describing a lesson
@@ -181,113 +169,4 @@ func MakeLesson(week Week, day string, number int) (l Lesson) {
 	}
 
 	return l
-}
-
-//GetFacs gets all faculties
-func GetFacs() ([]Fac, error) {
-	var (
-		addr      = "https://www.sgu.ru/schedule"
-		fac       Fac
-		faculties []Fac
-	)
-
-	res, err := http.Get(addr)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("Status code error: %d %s", res.StatusCode, res.Status)
-	}
-
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	doc.Find(".panes_item__type_group ul li").Each(func(_ int, s *goquery.Selection) {
-		fac.Name = s.Find("a").Text()
-		href, _ := s.Find("a").Attr("href")
-		fac.Link = strings.Split(href, "/")[2]
-		fac.Abbr = abbr.Faculty(fac.Name)
-		faculties = append(faculties, fac)
-	})
-
-	return faculties, nil
-}
-
-//GetTypesofEducation gets types of education on faculty
-func GetTypesofEducation(facLink string) ([]string, error) {
-	var (
-		addr  = "https://www.sgu.ru/schedule/" + facLink
-		typ   string
-		types []string
-	)
-
-	res, err := http.Get(addr)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("Status code error: %d %s", res.StatusCode, res.Status)
-	}
-
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	doc.Find(".form_education").Each(func(_ int, s *goquery.Selection) {
-		if s.ChildrenFiltered("legend").Text() == "Дневная форма обучения" {
-			s.Find(".group-type").Each(func(_ int, t *goquery.Selection) {
-				typ = t.ChildrenFiltered("legend").Text()
-				types = append(types, typ)
-			})
-		}
-	})
-
-	return types, nil
-}
-
-//GetGroups gets groups of the faculty
-func GetGroups(facLink, educationType string) ([]string, error) {
-	var (
-		addr   = "https://www.sgu.ru/schedule/" + facLink
-		group  string
-		groups []string
-	)
-
-	res, err := http.Get(addr)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("Status code error: %d %s", res.StatusCode, res.Status)
-	}
-
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	doc.Find(".form_education").Each(func(_ int, s *goquery.Selection) {
-		if s.ChildrenFiltered("legend").Text() == "Дневная форма обучения" {
-			s.Find(".group-type").Each(func(_ int, t *goquery.Selection) {
-				typ := t.ChildrenFiltered("legend").Text()
-				if typ == educationType {
-					t.Find("a").Each(func(_ int, g *goquery.Selection) {
-						group = g.Text()
-						groups = append(groups, group)
-					})
-				}
-			})
-		}
-	})
-
-	return groups, nil
 }

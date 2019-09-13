@@ -2,11 +2,8 @@ package main
 
 import (
 	"encoding/xml"
-	"errors"
-	"io"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -14,7 +11,8 @@ import (
 
 	"github.com/ultram4rine/raspisos/config"
 	"github.com/ultram4rine/raspisos/keyboards"
-	"github.com/ultram4rine/raspisos/parsing"
+	"github.com/ultram4rine/raspisos/schedule"
+	"github.com/ultram4rine/raspisos/www"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -36,10 +34,10 @@ func main() {
 		//TODO: schedule type "session"
 		//FIXME: non full output for multiply lessons in one time
 
-		faculty     string
-		group       string
-		schedule    = "lesson"
-		xmlschedule parsing.XMLStruct
+		faculty      string
+		group        string
+		scheduleType = "lesson"
+		xmlschedule  schedule.XMLStruct
 	)
 
 	err := config.ParseConfig(confPath)
@@ -47,7 +45,7 @@ func main() {
 		log.Fatal("Error parsing config: ", err)
 	}
 
-	faculties, err := parsing.GetFacs()
+	faculties, err := www.GetFacs()
 	if err != nil {
 		log.Println("Error getting faculties:", err)
 	}
@@ -123,7 +121,7 @@ func main() {
 			case "fac":
 				userMap[update.CallbackQuery.From.ID] = strings.Split(ans, "&")[0]
 
-				educationTypes, _ := parsing.GetTypesofEducation(strings.Split(ans, "&")[0])
+				educationTypes, _ := www.GetTypesofEducation(strings.Split(ans, "&")[0])
 
 				keyboard := keyboards.CreateGroupsKeyboard(strings.Split(ans, "&")[0], educationTypes[0], educationTypes)
 
@@ -141,9 +139,9 @@ func main() {
 				if contains(days, day) {
 					faculty = strings.Split(userMap[update.CallbackQuery.From.ID], "&")[0]
 					group = strings.Split(userMap[update.CallbackQuery.From.ID], "&")[1]
-					address := "https://www.sgu.ru/schedule/" + faculty + "/do/" + group + "/" + schedule
+					address := "https://www.sgu.ru/schedule/" + faculty + "/do/" + group + "/" + scheduleType
 
-					msg.Text, err = makeLessonMsg(schedule+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
+					msg.Text, err = makeLessonMsg(scheduleType+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
 					if err != nil {
 						log.Println(err)
 					}
@@ -167,8 +165,8 @@ func contains(slice []string, x string) bool {
 }
 
 //makeLessonMsg make message to answer with schedule
-func makeLessonMsg(filepath, address, day string, xmlschedule parsing.XMLStruct) (msgtext string, err error) {
-	err = DownloadFileFromURL(filepath, address)
+func makeLessonMsg(filepath, address, day string, xmlschedule schedule.XMLStruct) (msgtext string, err error) {
+	err = www.DownloadFileFromURL(filepath, address)
 	if err != nil {
 		return "", err
 	}
@@ -193,10 +191,10 @@ func makeLessonMsg(filepath, address, day string, xmlschedule parsing.XMLStruct)
 		return "", err
 	}
 
-	week := parsing.MakeWeek(xmlschedule)
+	week := schedule.MakeWeek(xmlschedule)
 
 	for i := 1; i < 9; i++ {
-		l := parsing.MakeLesson(week, day, i)
+		l := schedule.MakeLesson(week, day, i)
 		msgtext += "*" + l.Time + "*\n"
 
 		if l.Name != "" {
@@ -228,30 +226,4 @@ func makeLessonMsg(filepath, address, day string, xmlschedule parsing.XMLStruct)
 	}
 
 	return msgtext, nil
-}
-
-//DownloadFileFromURL for download
-func DownloadFileFromURL(filepath string, url string) error {
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.New("bad status: " + resp.Status)
-	}
-
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
