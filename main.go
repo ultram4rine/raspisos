@@ -5,11 +5,11 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ultram4rine/raspisos/config"
+	"github.com/ultram4rine/raspisos/emoji"
 	"github.com/ultram4rine/raspisos/keyboards"
 	"github.com/ultram4rine/raspisos/schedule"
 	"github.com/ultram4rine/raspisos/www"
@@ -43,6 +43,11 @@ func main() {
 	err := config.ParseConfig(confPath)
 	if err != nil {
 		log.Fatal("Error parsing config: ", err)
+	}
+
+	emojiMap, err := emoji.Parse()
+	if err != nil {
+		log.Fatal("Error parsing emoji: ", err)
 	}
 
 	faculties, err := www.GetFacs()
@@ -81,7 +86,7 @@ func main() {
 			if cmd != "" {
 				switch cmd {
 				case "start":
-					keyboard := keyboards.CreateMainKeyboard()
+					keyboard := keyboards.CreateMainKeyboard(emojiMap)
 
 					msg.ReplyMarkup = keyboard
 					msg.Text = "Started"
@@ -93,10 +98,8 @@ func main() {
 			} else {
 				text := update.Message.Text
 
-				e1, _ := strconv.ParseInt(strings.TrimPrefix("\\U0001F4DA", "\\U"), 16, 32)
-
 				switch text {
-				case string(e1) + " Занятия":
+				case emojiMap["books"] + " Занятия":
 					keyboard := keyboards.CreateDaysKeyboard()
 
 					msg.ReplyMarkup = keyboard

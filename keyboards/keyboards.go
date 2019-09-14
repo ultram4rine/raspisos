@@ -1,29 +1,21 @@
 package keyboards
 
 import (
-	"log"
-
 	"github.com/ultram4rine/raspisos/data"
-	"github.com/ultram4rine/raspisos/emoji"
 	"github.com/ultram4rine/raspisos/www"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-func CreateMainKeyboard() tgbotapi.ReplyKeyboardMarkup {
-	books, memo, bell, err := emoji.Parse()
-	if err != nil {
-		log.Printf("Error parsing emojies: %s", err)
-	}
-
+func CreateMainKeyboard(emojiMap map[string]string) tgbotapi.ReplyKeyboardMarkup {
 	keyboard := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton(books+" Занятия"),
-			tgbotapi.NewKeyboardButton(memo+" Сессия"),
+			tgbotapi.NewKeyboardButton(emojiMap["books"]+" Занятия"),
+			tgbotapi.NewKeyboardButton(emojiMap["memo"]+" Сессия"),
 		),
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("Изменить группу"),
-			tgbotapi.NewKeyboardButton(bell+"Уведомления"),
+			tgbotapi.NewKeyboardButton(emojiMap["gear"]+" Настройки"),
 		),
 	)
 

@@ -1,35 +1,30 @@
 package emoji
 
 import (
-	"log"
 	"strconv"
 	"strings"
 )
 
-const (
-	books = "\\U0001F4DA"
-	memo  = "\\U0001F4DD"
-	bell  = "\\U0001F514"
-)
+//Emoji type describe emoji
+type Emoji struct {
+	Name string
+	Code string
+}
 
-func Parse() (e1, e2, e3 string, err error) {
-	e1int, err := strconv.ParseInt(strings.TrimPrefix(books, "\\U"), 16, 32)
-	if err != nil {
-		log.Printf("Error parsing books emoji: %s", err)
-		return "", "", "", err
+var emojiList = []Emoji{{"bell", "\\U0001F514"}, {"books", "\\U0001F4DA"}, {"gear", "\\U00002699"}, {"memo", "\\U0001F4DD"}}
+
+//Parse function parse all used emoji
+func Parse() (map[string]string, error) {
+	emojiMap := make(map[string]string)
+
+	for _, e := range emojiList {
+		eInt, err := strconv.ParseInt(strings.TrimPrefix(e.Code, "\\U"), 16, 32)
+		if err != nil {
+			return nil, err
+		}
+
+		emojiMap[e.Name] = string(eInt)
 	}
 
-	e2int, err := strconv.ParseInt(strings.TrimPrefix(memo, "\\U"), 16, 32)
-	if err != nil {
-		log.Printf("Error parsing memo emoji: %s", err)
-		return "", "", "", err
-	}
-
-	e3int, err := strconv.ParseInt(strings.TrimPrefix(bell, "\\U"), 16, 32)
-	if err != nil {
-		log.Printf("Error parsing bell emoji: %s", err)
-		return "", "", "", err
-	}
-
-	return string(e1int), string(e2int), string(e3int), nil
+	return emojiMap, nil
 }
