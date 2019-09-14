@@ -128,7 +128,7 @@ func main() {
 					var keyboard tgbotapi.ReplyKeyboardMarkup
 
 					if user, ok := usersMap[update.Message.Chat.ID]; ok {
-						msg.Text = "I already have your settings.\nФакультет: " + user.Faculty + "\nГруппа: " + user.Group
+						msg.Text = "I already have your settings.\n Факультет: " + user.Faculty + "\n Группа: " + user.Group
 						keyboard = keyboards.CreateMainKeyboard(emojiMap)
 					} else {
 						usersMap[update.Message.Chat.ID] = newUser
@@ -141,7 +141,7 @@ func main() {
 				case "help":
 					msg.Text = "Help message"
 				case "src":
-					msg.Text = "Код приложения доступен по ссылке.\nhttps://github.com/ultram4rine/raspisos"
+					msg.Text = "Код приложения доступен по ссылке.\n https://github.com/ultram4rine/raspisos"
 				default:
 					msg.Text = "Unknown command, type \"/help\" for help"
 				}
@@ -296,24 +296,24 @@ func makeLessonMsg(address, day string, xmlschedule schedule.XMLStruct) (msgtext
 
 		if l.Name != "" {
 			if l.TypeofWeek != "" {
-				msgtext += "*Неделя:* " + l.TypeofWeek + "\n"
+				msgtext += "*Неделя:* " + l.TypeofWeek + "\n "
 			}
 
 			if l.TypeofLesson != "" {
-				msgtext += "*Занятие:* " + l.TypeofLesson + "\n"
+				msgtext += "*Занятие:* " + l.TypeofLesson + "\n "
 			}
 
-			msgtext += "*Предмет:* " + l.Name + "\n"
+			msgtext += "*Предмет:* " + l.Name + "\n "
 
 			if l.SubGroup != "" {
-				msgtext += "*Подгруппа:* " + l.SubGroup + "\n"
+				msgtext += "*Подгруппа:* " + l.SubGroup + "\n "
 			}
 
-			msgtext += "*Преподаватель:* " + l.Teacher + "\n"
+			msgtext += "*Преподаватель:* " + l.Teacher + "\n "
 
-			msgtext += "*Аудитория:* " + l.Classroom + "\n\n"
+			msgtext += "*Аудитория:* " + l.Classroom + "\n \n "
 		} else {
-			msgtext += "_Пары нет_\n\n"
+			msgtext += "_Пары нет_\n \n "
 		}
 	}
 
