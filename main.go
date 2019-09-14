@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/xml"
 	"io/ioutil"
 	"log"
@@ -16,15 +17,17 @@ import (
 	"github.com/ultram4rine/raspisos/www"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 func main() {
 	var (
-		confPath = "conf.json"
-		days     = []string{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
-		newUser  data.User
-		users    = make(map[int64]data.User)
-		//TODO: Save faculties and groups of user to DB or json files
+		confPath  = "conf.json"
+		days      = []string{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
+		newUser   data.User
+		usersList []data.User
+		usersMap  = make(map[int64]data.User)
 		//TODO: webDesign and translator option
 		//webDesign  bool
 		//translator bool
@@ -44,6 +47,21 @@ func main() {
 	err := config.ParseConfig(confPath)
 	if err != nil {
 		log.Fatal("Error parsing config: ", err)
+	}
+
+	db, err := sqlx.Connect("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Error connecting to DB: ", err)
+	}
+	defer db.Close()
+
+	err = db.Select(&usersList, "SELECT * FROM users")
+	if err != nil {
+		log.Fatal("Error getting users list: ", err)
+	}
+
+	for _, user := range usersList {
+		usersMap[user.ID] = user
 	}
 
 	emojiMap, err := emoji.Parse()
@@ -97,11 +115,11 @@ func main() {
 				case "start":
 					var keyboard tgbotapi.ReplyKeyboardMarkup
 
-					if user, ok := users[update.Message.Chat.ID]; ok {
+					if user, ok := usersMap[update.Message.Chat.ID]; ok {
 						msg.Text = "I already have your settings.\nФакультет: " + user.Faculty + "\nГруппа: " + user.Group
 						keyboard = keyboards.CreateMainKeyboard(emojiMap)
 					} else {
-						users[update.Message.Chat.ID] = newUser
+						usersMap[update.Message.Chat.ID] = newUser
 
 						msg.Text = "New user! Set your group."
 						keyboard = keyboards.CreateFirstKeyboard(emojiMap)
@@ -124,6 +142,8 @@ func main() {
 
 					msg.ReplyMarkup = keyboard
 					msg.Text = "Выберите день недели"
+				case emojiMap["memo"] + " Сессия":
+
 				case "Изменить группу", "Задать группу":
 					keyboard := keyboards.CreateFacsKeyboard(faculties)
 
@@ -154,18 +174,50 @@ func main() {
 				bot.Send(msgedit)
 			case "group":
 				newUser.Group = strings.Split(ans, "&")[0]
+				newUser.ID = update.CallbackQuery.Message.Chat.ID
+				newUser.Notifications = false
 
-				users[update.CallbackQuery.Message.Chat.ID] = newUser
+				usersMap[update.CallbackQuery.Message.Chat.ID] = newUser
 
 				msgdelete := tgbotapi.NewDeleteMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID)
 				bot.Send(msgdelete)
 
-				keyboard := keyboards.CreateMainKeyboard(emojiMap)
-				msg.ReplyMarkup = keyboard
-				msg.Text = "Done!"
-				bot.Send(msg)
+				var userID int64
+
+				err = db.QueryRow("SELECT id FROM users WHERE id = $1", update.CallbackQuery.Message.Chat.ID).Scan(&userID)
+				if err != nil {
+					if err != sql.ErrNoRows {
+						log.Println("Error checking user settings existing in DB: ", err)
+					} else {
+						_, err := db.Exec("INSERT INTO users (id, fac, groupnum, notifications, ignorelist) VALUES ($1, $2, $3, $4, $5)", newUser.ID, newUser.Faculty, newUser.Group, newUser.Notifications, pq.Array(newUser.IgnoreList))
+						if err != nil {
+							log.Println("Error inserting user settings to db: ", err)
+
+							msg.Text = "Error inserting your settings to db"
+							bot.Send(msg)
+						} else {
+							keyboard := keyboards.CreateMainKeyboard(emojiMap)
+							msg.ReplyMarkup = keyboard
+							msg.Text = "Done!"
+							bot.Send(msg)
+						}
+					}
+				} else {
+					_, err := db.Exec("UPDATE users SET (id, fac, groupnum, notifications, ignorelist) = ($1, $2, $3, $4, $5)", newUser.ID, newUser.Faculty, newUser.Group, newUser.Notifications, pq.Array(newUser.IgnoreList))
+					if err != nil {
+						log.Println("Error updating user settings to db: ", err)
+
+						msg.Text = "Error updating your settings to db"
+						bot.Send(msg)
+					} else {
+						keyboard := keyboards.CreateMainKeyboard(emojiMap)
+						msg.ReplyMarkup = keyboard
+						msg.Text = "Done!"
+						bot.Send(msg)
+					}
+				}
 			case "day":
-				if user, ok := users[update.CallbackQuery.Message.Chat.ID]; ok {
+				if user, ok := usersMap[update.CallbackQuery.Message.Chat.ID]; ok {
 					day := strings.Split(ans, "&")[0]
 					address := "https://www.sgu.ru/schedule/" + user.Faculty + "/do/" + user.Group + "/lesson"
 
