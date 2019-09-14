@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ultram4rine/raspisos/config"
+	"github.com/ultram4rine/raspisos/data"
 	"github.com/ultram4rine/raspisos/emoji"
 	"github.com/ultram4rine/raspisos/keyboards"
 	"github.com/ultram4rine/raspisos/schedule"
@@ -21,7 +22,8 @@ func main() {
 	var (
 		confPath = "conf.json"
 		days     = []string{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
-		userMap  = make(map[int]string)
+		newUser  data.User
+		users    = make(map[int64]data.User)
 		//TODO: Save faculties and groups of user to DB or json files
 		//TODO: webDesign and translator option
 		//webDesign  bool
@@ -34,10 +36,9 @@ func main() {
 		//TODO: schedule type "session"
 		//FIXME: non full output for multiply lessons in one time
 
-		faculty      string
-		group        string
-		scheduleType = "lesson"
-		xmlschedule  schedule.XMLStruct
+		faculty     string
+		group       string
+		xmlschedule schedule.XMLStruct
 	)
 
 	err := config.ParseConfig(confPath)
@@ -52,7 +53,20 @@ func main() {
 
 	faculties, err := www.GetFacs()
 	if err != nil {
-		log.Println("Error getting faculties:", err)
+		log.Fatal("Error getting faculties:", err)
+	}
+	go func() {
+		for range time.Tick(time.Hour * 24) {
+			faculties, err = www.GetFacs()
+			if err != nil {
+				log.Println("Error updating faculties:", err)
+			}
+		}
+	}()
+
+	_, err = time.LoadLocation("Europe/Saratov")
+	if err != nil {
+		log.Fatal("Error getting time zone: ", err)
 	}
 
 	bot, err := tgbotapi.NewBotAPI(config.Conf.TgBotToken)
@@ -71,11 +85,6 @@ func main() {
 		log.Fatal("Error getting updates channel of the bot: ", err)
 	}
 
-	_, err = time.LoadLocation("Europe/Saratov")
-	if err != nil {
-		log.Printf("Error getting time zone: %s", err)
-	}
-
 	for update := range updates {
 		if update.Message != nil {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
@@ -86,10 +95,19 @@ func main() {
 			if cmd != "" {
 				switch cmd {
 				case "start":
-					keyboard := keyboards.CreateMainKeyboard(emojiMap)
+					var keyboard tgbotapi.ReplyKeyboardMarkup
+
+					if user, ok := users[update.Message.Chat.ID]; ok {
+						msg.Text = "I already have your settings.\nФакультет: " + user.Faculty + "\nГруппа: " + user.Group
+						keyboard = keyboards.CreateMainKeyboard(emojiMap)
+					} else {
+						users[update.Message.Chat.ID] = newUser
+
+						msg.Text = "New user! Set your group."
+						keyboard = keyboards.CreateFirstKeyboard(emojiMap)
+					}
 
 					msg.ReplyMarkup = keyboard
-					msg.Text = "Started"
 				case "help":
 					msg.Text = "Help message"
 				default:
@@ -104,7 +122,7 @@ func main() {
 
 					msg.ReplyMarkup = keyboard
 					msg.Text = "Выберите день недели"
-				case "Изменить группу":
+				case "Изменить группу", "Задать группу":
 					keyboard := keyboards.CreateFacsKeyboard(faculties)
 
 					msg.ReplyMarkup = keyboard
@@ -122,7 +140,7 @@ func main() {
 			typo := strings.Split(ans, "&")[1]
 			switch typo {
 			case "fac":
-				userMap[update.CallbackQuery.From.ID] = strings.Split(ans, "&")[0]
+				newUser.Faculty = strings.Split(ans, "&")[0]
 
 				educationTypes, _ := www.GetTypesofEducation(strings.Split(ans, "&")[0])
 
@@ -133,23 +151,42 @@ func main() {
 				msgedit.ParseMode = "markdown"
 				bot.Send(msgedit)
 			case "group":
-				userMap[update.CallbackQuery.From.ID] += "&" + strings.Split(ans, "&")[0]
-				log.Println(userMap[update.CallbackQuery.From.ID])
-				msgedit := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, "Done")
-				bot.Send(msgedit)
+				newUser.Group = strings.Split(ans, "&")[0]
+
+				users[update.CallbackQuery.Message.Chat.ID] = newUser
+
+				msgdelete := tgbotapi.NewDeleteMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID)
+				bot.Send(msgdelete)
+
+				keyboard := keyboards.CreateMainKeyboard(emojiMap)
+				msg.ReplyMarkup = keyboard
+				msg.Text = "Done!"
+				bot.Send(msg)
 			case "day":
-				day := strings.Split(ans, "&")[0]
-				if contains(days, day) {
-					faculty = strings.Split(userMap[update.CallbackQuery.From.ID], "&")[0]
-					group = strings.Split(userMap[update.CallbackQuery.From.ID], "&")[1]
-					address := "https://www.sgu.ru/schedule/" + faculty + "/do/" + group + "/" + scheduleType
+				if user, ok := users[update.CallbackQuery.Message.Chat.ID]; ok {
+					day := strings.Split(ans, "&")[0]
+					address := "https://www.sgu.ru/schedule/" + user.Faculty + "/do/" + user.Group + "/lesson"
 
-					msg.Text, err = makeLessonMsg(scheduleType+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
-					if err != nil {
-						log.Println(err)
+					if contains(days, day) {
+						msg.Text, err = makeLessonMsg("lesson"+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
+						if err != nil {
+							log.Println(err)
+						}
+
+						msg.ParseMode = "markdown"
+						bot.Send(msg)
+					} else {
+						if day == "Сегодня" {
+
+						} else if day == "Завтра" {
+
+						}
 					}
+				} else {
+					keyboard := keyboards.CreateFirstKeyboard(emojiMap)
 
-					msg.ParseMode = "markdown"
+					msg.ReplyMarkup = keyboard
+					msg.Text = "Make your schedule"
 					bot.Send(msg)
 				}
 			}
