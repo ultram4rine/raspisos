@@ -110,6 +110,8 @@ func main() {
 					msg.ReplyMarkup = keyboard
 				case "help":
 					msg.Text = "Help message"
+				case "src":
+					msg.Text = "Код приложения доступен по ссылке.\nhttps://github.com/ultram4rine/raspisos"
 				default:
 					msg.Text = "Unknown command, type \"/help\" for help"
 				}
