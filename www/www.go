@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	abbr "github.com/ultram4rine/raspisos/abbreviation"
@@ -124,27 +123,15 @@ func GetGroups(facLink, educationType string) ([]string, error) {
 }
 
 //DownloadFileFromURL for download
-func DownloadFileFromURL(filepath string, url string) error {
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
+func DownloadFileFromURL(url string) (io.ReadCloser, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.New("bad status: " + resp.Status)
+		return nil, errors.New("Bad status: " + resp.Status)
 	}
 
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return resp.Body, nil
 }

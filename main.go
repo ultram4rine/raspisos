@@ -39,8 +39,6 @@ func main() {
 		//TODO: schedule type "session"
 		//FIXME: non full output for multiply lessons in one time
 
-		faculty     string
-		group       string
 		xmlschedule schedule.XMLStruct
 	)
 
@@ -236,7 +234,7 @@ func main() {
 					address := "https://www.sgu.ru/schedule/" + user.Faculty + "/do/" + user.Group + "/lesson"
 
 					if contains(days, day) {
-						msg.Text, err = makeLessonMsg("lesson"+"_"+faculty+"_"+group+".xml", address, day, xmlschedule)
+						msg.Text, err = makeLessonMsg(address, day, xmlschedule)
 						if err != nil {
 							log.Println(err)
 						}
@@ -273,23 +271,14 @@ func contains(slice []string, x string) bool {
 }
 
 //makeLessonMsg make message to answer with schedule
-func makeLessonMsg(filepath, address, day string, xmlschedule schedule.XMLStruct) (msgtext string, err error) {
-	err = www.DownloadFileFromURL(filepath, address)
+func makeLessonMsg(address, day string, xmlschedule schedule.XMLStruct) (msgtext string, err error) {
+	data, err := www.DownloadFileFromURL(address)
 	if err != nil {
 		return "", err
 	}
+	defer data.Close()
 
-	xmlfile, err := os.Open(filepath)
-	if err != nil {
-		return "", err
-	}
-
-	xmldata, err := ioutil.ReadAll(xmlfile)
-	if err != nil {
-		return "", err
-	}
-
-	err = xmlfile.Close()
+	xmldata, err := ioutil.ReadAll(data)
 	if err != nil {
 		return "", err
 	}
@@ -326,11 +315,6 @@ func makeLessonMsg(filepath, address, day string, xmlschedule schedule.XMLStruct
 		} else {
 			msgtext += "_Пары нет_\n\n"
 		}
-	}
-
-	err = os.Remove(filepath)
-	if err != nil {
-		return msgtext, err
 	}
 
 	return msgtext, nil
