@@ -2,11 +2,11 @@ package data
 
 //User is a struct to save user's settings
 type User struct {
-	ID            int64    `db:"id"`
-	Faculty       string   `db:"fac"`
-	Group         string   `db:"groupnum"`
-	Notifications bool     `db:"notifications"`
-	IgnoreList    []string `db:"ignorelist"`
+	ID            int64
+	Faculty       string
+	Group         string
+	Notifications bool
+	IgnoreList    []string
 }
 
 //Fac is a struct describing faculty

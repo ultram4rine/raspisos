@@ -55,9 +55,23 @@ func main() {
 	}
 	defer db.Close()
 
-	err = db.Select(&usersList, "SELECT * FROM users")
+	rows, err := db.Query("SELECT * FROM users")
 	if err != nil {
 		log.Fatal("Error getting users list: ", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user data.User
+
+		if err := rows.Scan(&user.ID, &user.Faculty, &user.Group, &user.Notifications, pq.Array(&user.IgnoreList)); err != nil {
+			log.Fatal("Error scanning user: ", err)
+		}
+
+		usersList = append(usersList, user)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal("Rows error: ", err)
 	}
 
 	for _, user := range usersList {
