@@ -233,13 +233,15 @@ func main() {
 					address := "https://www.sgu.ru/schedule/" + user.Faculty + "/do/" + user.Group + "/lesson"
 
 					if contains(days, day) {
-						msg.Text, err = makeLessonMsg(address, day, xmlschedule)
+						text, err := makeLessonMsg(address, day, xmlschedule)
 						if err != nil {
 							log.Println(err)
 						}
 
-						msg.ParseMode = "markdown"
-						bot.Send(msg)
+						msgedit := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, text)
+
+						msgedit.ParseMode = "markdown"
+						bot.Send(msgedit)
 					} else {
 						if day == "Сегодня" {
 
@@ -249,6 +251,9 @@ func main() {
 					}
 				} else {
 					keyboard := keyboards.CreateFirstKeyboard(emojiMap)
+
+					msgdelete := tgbotapi.NewDeleteMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID)
+					bot.Send(msgdelete)
 
 					msg.ReplyMarkup = keyboard
 					msg.Text = "Make your schedule"
