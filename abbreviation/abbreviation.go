@@ -13,6 +13,11 @@ func Faculty(name string) string {
 		return string(r1[0:3]) + "-" + string(r2[0:3])
 	} else if parts[len(parts)-1] == "факультет" {
 		r := []rune(parts[0])
+
+		if parts[0] == "Экономический" {
+			return "Эконом"
+		}
+
 		if string(r[0:3]) == "Гео" {
 			switch string(r[3]) {
 			case "г":
@@ -51,6 +56,42 @@ func Faculty(name string) string {
 		}
 
 		return abbr
+	} else if parts[0] == "Факультет" {
+		if parts[1] == "иностранных" {
+			abbr := "ИН.ЯЗ"
+			return abbr
+		} else if parts[1] == "компьютерных" {
+			abbr := "КНиИТ"
+			return abbr
+		} else if parts[1] == "нано-" {
+			abbr := "ФНБМТ"
+			return abbr
+		} else if parts[1] == "психолого-педагогического" {
+			abbr := "ППиСО"
+			return abbr
+		} else {
+			var (
+				runes [][]rune
+				abbr  string
+			)
+
+			for i := range parts {
+				r := []rune(parts[i])
+				runes = append(runes, r)
+			}
+
+			for _, p := range runes {
+				if string(p) == "и" {
+					abbr += "и"
+				} else {
+					abbr += strings.ToUpper(string(p[0]))
+				}
+			}
+
+			return abbr
+		}
+	} else if parts[0] == "Колледж" {
+		return parts[0] + " " + parts[len(parts)-1]
 	}
 
 	return name
