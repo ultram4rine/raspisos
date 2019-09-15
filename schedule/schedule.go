@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -29,6 +30,7 @@ type Lesson struct {
 	SubGroup     string
 	Teacher      string
 	Classroom    string
+	Special      string
 	Data         string
 }
 
@@ -77,96 +79,118 @@ func (week Week) makeDay(day string) (d Day) {
 	return d
 }
 
-func formatLesson(s string) (l Lesson) {
-	var (
-		n = strings.Count(s, "\n")
-		k int
-	)
+func formatLesson(s string) []Lesson {
+	var k, length int
 
-	if strings.Contains(s, "знам.") {
-		l.TypeofWeek = "Знаменатель"
-	}
-	if strings.Contains(s, "чис.") {
-		l.TypeofWeek = "Числитель"
-	}
-	if strings.Contains(s, "лек.") {
-		l.TypeofLesson = "Лекция"
-	}
-	if strings.Contains(s, "пр.") {
-		l.TypeofLesson = "Практика"
+	lStrings := strings.Split(s, "\n\n")
+
+	switch len(lStrings) == 1 {
+	case true:
+		length = 1
+	case false:
+		length = len(lStrings) - 1
 	}
 
-	k = strings.Index(s, ".")
-	if k != -1 {
-		s = s[k+1:]
-		k = strings.IndexRune(s, '\n')
-		l.Name = s[:k]
-		s = s[k+1:]
+	lessons := make([]Lesson, length)
 
-		if n%5 == 0 {
-			k = strings.IndexRune(s, '\n')
-			sub := s[:k]
-			if strings.Contains(sub, "под.") {
-				if strings.Contains(sub, "1") {
-					l.SubGroup = "1"
-				} else if strings.Contains(sub, "2") {
-					l.SubGroup = "2"
-				}
-			}
-			s = s[k+1:]
+	for i, lesson := range lStrings {
+		if lesson == " " && i != 0 {
+			continue
 		}
 
-		k = strings.IndexRune(s, '\n')
-		l.Teacher = s[:k]
-		s = s[k+1:]
+		lesson += "\n"
+		n := strings.Count(lesson, "\n")
 
-		k = strings.IndexRune(s, '\n')
-		l.Classroom = s[:k]
-		s = s[k+1:]
+		if strings.Contains(lesson, "знам.") {
+			lessons[i].TypeofWeek = "Знаменатель"
+			k = strings.Index(lesson, ".")
+			lesson = lesson[k+1:]
+		}
+		if strings.Contains(lesson, "чис.") {
+			lessons[i].TypeofWeek = "Числитель"
+			k = strings.Index(lesson, ".")
+			lesson = lesson[k+1:]
+		}
+		if strings.Contains(lesson, "лек.") {
+			lessons[i].TypeofLesson = "Лекция"
+			k = strings.Index(lesson, ".")
+			lesson = lesson[k+1:]
+		}
+		if strings.Contains(lesson, "пр.") {
+			lessons[i].TypeofLesson = "Практика"
+			k = strings.Index(lesson, ".")
+			lesson = lesson[k+1:]
+		}
+
+		k = strings.Index(lesson, ".")
+		if k != -1 {
+			k = strings.IndexRune(lesson, '\n')
+			lessons[i].Name = lesson[:k]
+			lessons[i].Name = strings.TrimSpace(lessons[i].Name)
+			lesson = lesson[k+1:]
+
+			if n%4 == 0 {
+				k = strings.IndexRune(lesson, '\n')
+				sub := lesson[:k]
+				fmt.Println(sub)
+				if strings.Contains(sub, "под.") {
+					if strings.Contains(sub, "1") {
+						lessons[i].SubGroup = "1"
+					} else if strings.Contains(sub, "2") {
+						lessons[i].SubGroup = "2"
+					}
+				} else {
+					lessons[i].Special = sub
+				}
+				lesson = lesson[k+1:]
+			}
+
+			k = strings.IndexRune(lesson, '\n')
+			lessons[i].Teacher = lesson[:k]
+			lesson = lesson[k+1:]
+
+			k = strings.IndexRune(lesson, '\n')
+			lessons[i].Classroom = lesson[:k]
+			lesson = lesson[k+1:]
+		}
 	}
 
-	return l
+	return lessons
 }
 
-func MakeLesson(week Week, day string, number int) (l Lesson) {
+func formatAndsetTime(number int, t, d Day, lessons []Lesson) []Lesson {
+	lessons = formatLesson(d.Lessons[number].Data)
+	for i := range lessons {
+		lessons[i].Time = strings.Replace(t.Lessons[number].Data, "- ", "-", -1)
+	}
+
+	return lessons
+}
+
+func MakeLesson(week Week, day string, number int) (lessons []Lesson) {
 	var (
 		t = week.makeTime()
 		d = week.makeDay(day)
 	)
+
 	switch number {
 	case 1:
-		l.Data = d.Lessons[2].Data
-		l = formatLesson(l.Data)
-		l.Time = strings.Replace(t.Lessons[2].Data, "- ", "-", -1)
+		lessons = formatAndsetTime(2, t, d, lessons)
 	case 2:
-		l.Data = d.Lessons[3].Data
-		l = formatLesson(l.Data)
-		l.Time = strings.Replace(t.Lessons[3].Data, "- ", "-", -1)
+		lessons = formatAndsetTime(3, t, d, lessons)
 	case 3:
-		l.Data = d.Lessons[4].Data
-		l = formatLesson(l.Data)
-		l.Time = strings.Replace(t.Lessons[4].Data, "- ", "-", -1)
+		lessons = formatAndsetTime(4, t, d, lessons)
 	case 4:
-		l.Data = d.Lessons[5].Data
-		l = formatLesson(l.Data)
-		l.Time = strings.Replace(t.Lessons[5].Data, "- ", "-", -1)
+		lessons = formatAndsetTime(5, t, d, lessons)
 	case 5:
-		l.Data = d.Lessons[6].Data
-		l = formatLesson(l.Data)
-		l.Time = strings.Replace(t.Lessons[6].Data, "- ", "-", -1)
+		lessons = formatAndsetTime(6, t, d, lessons)
 	case 6:
-		l.Data = d.Lessons[7].Data
-		l = formatLesson(l.Data)
-		l.Time = strings.Replace(t.Lessons[7].Data, "- ", "-", -1)
+		lessons = formatAndsetTime(7, t, d, lessons)
 	case 7:
-		l.Data = d.Lessons[8].Data
-		l = formatLesson(l.Data)
-		l.Time = strings.Replace(t.Lessons[8].Data, "- ", "-", -1)
+		lessons = formatAndsetTime(8, t, d, lessons)
 	case 8:
-		l.Data = d.Lessons[9].Data
-		l = formatLesson(l.Data)
-		l.Time = strings.Replace(t.Lessons[9].Data, "- ", "-", -1)
+		lessons = formatAndsetTime(9, t, d, lessons)
 	}
 
-	return l
+	return lessons
 }

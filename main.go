@@ -37,7 +37,6 @@ func main() {
 		//translatorGroupNum
 		//TODO: selection of group and faculty
 		//TODO: schedule type "session"
-		//FIXME: non full output for multiply lessons in one time
 
 		xmlschedule schedule.XMLStruct
 	)
@@ -292,28 +291,35 @@ func makeLessonMsg(address, day string, xmlschedule schedule.XMLStruct) (msgtext
 
 	for i := 1; i < 9; i++ {
 		l := schedule.MakeLesson(week, day, i)
-		msgtext += "*" + l.Time + "*\n"
+		msgtext += "*" + l[0].Time + "*\n "
 
-		if l.Name != "" {
-			if l.TypeofWeek != "" {
-				msgtext += "*Неделя:* " + l.TypeofWeek + "\n "
+		for j := range l {
+
+			if l[j].Name != "" {
+				if l[j].TypeofWeek != "" {
+					msgtext += "*Неделя:* " + l[j].TypeofWeek + "\n "
+				}
+
+				if l[j].TypeofLesson != "" {
+					msgtext += "*Занятие:* " + l[j].TypeofLesson + "\n "
+				}
+
+				if l[j].Special != "" {
+					msgtext += "*Доп. курс:* " + l[j].Special + "\n "
+				}
+
+				msgtext += "*Предмет:* " + l[j].Name + "\n "
+
+				if l[j].SubGroup != "" {
+					msgtext += "*Подгруппа:* " + l[j].SubGroup + "\n "
+				}
+
+				msgtext += "*Преподаватель:* " + l[j].Teacher + "\n "
+
+				msgtext += "*Аудитория:* " + l[j].Classroom + "\n \n "
+			} else {
+				msgtext += "_Пары нет_\n \n "
 			}
-
-			if l.TypeofLesson != "" {
-				msgtext += "*Занятие:* " + l.TypeofLesson + "\n "
-			}
-
-			msgtext += "*Предмет:* " + l.Name + "\n "
-
-			if l.SubGroup != "" {
-				msgtext += "*Подгруппа:* " + l.SubGroup + "\n "
-			}
-
-			msgtext += "*Преподаватель:* " + l.Teacher + "\n "
-
-			msgtext += "*Аудитория:* " + l.Classroom + "\n \n "
-		} else {
-			msgtext += "_Пары нет_\n \n "
 		}
 	}
 
