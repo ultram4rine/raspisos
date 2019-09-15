@@ -127,7 +127,7 @@ func main() {
 					var keyboard tgbotapi.ReplyKeyboardMarkup
 
 					if user, ok := usersMap[update.Message.Chat.ID]; ok {
-						msg.Text = "I already have your settings.\n Факультет: " + user.Faculty + "\n Группа: " + user.Group
+						msg.Text = "I already have your settings. \nФакультет: " + user.Faculty + " \nГруппа: " + user.Group
 						keyboard = keyboards.CreateMainKeyboard(emojiMap)
 					} else {
 						usersMap[update.Message.Chat.ID] = newUser
@@ -140,7 +140,7 @@ func main() {
 				case "help":
 					msg.Text = "Help message"
 				case "src":
-					msg.Text = "Код приложения доступен по ссылке.\n https://github.com/ultram4rine/raspisos"
+					msg.Text = "Код приложения доступен по ссылке. \nhttps://github.com/ultram4rine/raspisos"
 				default:
 					msg.Text = "Unknown command, type \"/help\" for help"
 				}
@@ -291,6 +291,45 @@ func main() {
 					msg.Text = "Make your schedule"
 					bot.Send(msg)
 				}
+			}
+		}
+		if update.InlineQuery != nil {
+			var articles []interface{}
+			query := strings.Split(update.InlineQuery.Query, " ")
+			if len(query) == 1 {
+				msg := tgbotapi.NewInlineQueryResultArticleMarkdown(update.InlineQuery.ID, "Укажите факультет и группу через пробел", "Укажите факультет и группу через пробел")
+				articles = append(articles, msg)
+			} else if len(query) == 2 {
+				var (
+					text    string
+					address = "https://www.sgu.ru/schedule/" + query[0] + "/do/" + query[1] + "/lesson"
+				)
+				weekDay := time.Now().In(loc).Weekday()
+				if weekDay == 0 {
+					text = "Сегодня воскресенье, пар нет."
+				} else {
+					wDay := translateDay(weekDay)
+
+					text, err = makeLessonMsg(address, wDay, xmlschedule)
+					if err != nil {
+						log.Println(err)
+					}
+				}
+
+				msg := tgbotapi.NewInlineQueryResultArticleMarkdown(update.InlineQuery.ID, "Расписание для "+update.InlineQuery.Query, text)
+				articles = append(articles, msg)
+			}
+
+			inlineConfig := tgbotapi.InlineConfig{
+				InlineQueryID: update.InlineQuery.ID,
+				IsPersonal:    true,
+				CacheTime:     0,
+				Results:       articles,
+			}
+
+			_, err := bot.AnswerInlineQuery(inlineConfig)
+			if err != nil {
+				log.Println(err)
 			}
 		}
 	}
