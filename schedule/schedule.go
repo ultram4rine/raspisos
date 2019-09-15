@@ -161,7 +161,7 @@ func formatLesson(s string) []Lesson {
 func formatAndsetTime(number int, t, d Day, lessons []Lesson) []Lesson {
 	lessons = formatLesson(d.Lessons[number].Data)
 	for i := range lessons {
-		lessons[i].Time = strings.Replace(t.Lessons[number].Data, "- ", "-", -1)
+		lessons[i].Time = strings.Replace(t.Lessons[number].Data, "- ", " - ", -1)
 	}
 
 	return lessons

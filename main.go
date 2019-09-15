@@ -291,34 +291,34 @@ func makeLessonMsg(address, day string, xmlschedule schedule.XMLStruct) (msgtext
 
 	for i := 1; i < 9; i++ {
 		l := schedule.MakeLesson(week, day, i)
-		msgtext += "*" + l[0].Time + "*\n "
+		msgtext += "*" + l[0].Time + "*\n"
 
 		for j := range l {
 
 			if l[j].Name != "" {
 				if l[j].TypeofWeek != "" {
-					msgtext += "*Неделя:* " + l[j].TypeofWeek + "\n "
+					msgtext += "*Неделя:* " + l[j].TypeofWeek + "\n"
 				}
 
 				if l[j].TypeofLesson != "" {
-					msgtext += "*Занятие:* " + l[j].TypeofLesson + "\n "
+					msgtext += "*Занятие:* " + l[j].TypeofLesson + "\n"
 				}
 
 				if l[j].Special != "" {
-					msgtext += "*Доп. курс:* " + l[j].Special + "\n "
+					msgtext += "*Доп. курс:* " + l[j].Special + "\n"
 				}
 
-				msgtext += "*Предмет:* " + l[j].Name + "\n "
+				msgtext += "*Предмет:* " + l[j].Name + "\n"
 
 				if l[j].SubGroup != "" {
-					msgtext += "*Подгруппа:* " + l[j].SubGroup + "\n "
+					msgtext += "*Подгруппа:* " + l[j].SubGroup + "\n"
 				}
 
-				msgtext += "*Преподаватель:* " + l[j].Teacher + "\n "
+				msgtext += "*Преподаватель:* " + l[j].Teacher + "\n"
 
-				msgtext += "*Аудитория:* " + l[j].Classroom + "\n \n "
+				msgtext += "*Аудитория:* " + l[j].Classroom + "\n\n"
 			} else {
-				msgtext += "_Пары нет_\n \n "
+				msgtext += "_Пары нет_\n\n"
 			}
 		}
 	}
