@@ -93,7 +93,7 @@ func main() {
 		}
 	}()
 
-	_, err = time.LoadLocation("Europe/Saratov")
+	loc, err := time.LoadLocation("Europe/Saratov")
 	if err != nil {
 		log.Fatal("Error getting time zone: ", err)
 	}
@@ -244,9 +244,41 @@ func main() {
 						bot.Send(msgedit)
 					} else {
 						if day == "Сегодня" {
+							weekDay := time.Now().In(loc).Weekday()
+							if weekDay == 0 {
+								msgedit := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, "Сегодня воскресенье, пар нет.")
+								bot.Send(msgedit)
+							} else {
+								wDay := translateDay(weekDay)
 
+								text, err := makeLessonMsg(address, wDay, xmlschedule)
+								if err != nil {
+									log.Println(err)
+								}
+
+								msgedit := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, text)
+
+								msgedit.ParseMode = "markdown"
+								bot.Send(msgedit)
+							}
 						} else if day == "Завтра" {
+							weekDay := time.Now().In(loc).Weekday()
+							if weekDay+1 == 0 {
+								msgedit := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, "Завтра воскресенье, пар нет.")
+								bot.Send(msgedit)
+							} else {
+								wDay := translateDay(weekDay + 1)
 
+								text, err := makeLessonMsg(address, wDay, xmlschedule)
+								if err != nil {
+									log.Println(err)
+								}
+
+								msgedit := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, text)
+
+								msgedit.ParseMode = "markdown"
+								bot.Send(msgedit)
+							}
 						}
 					}
 				} else {
@@ -262,6 +294,28 @@ func main() {
 			}
 		}
 	}
+}
+
+func translateDay(eng time.Weekday) string {
+	var rus string
+	switch eng {
+	case 0:
+		rus = "Воскресенье"
+	case 1:
+		rus = "Понедельник"
+	case 2:
+		rus = "Вторник"
+	case 3:
+		rus = "Среда"
+	case 4:
+		rus = "Четверг"
+	case 5:
+		rus = "Пятница"
+	case 6:
+		rus = "Суббота"
+	}
+
+	return rus
 }
 
 func contains(slice []string, x string) bool {
