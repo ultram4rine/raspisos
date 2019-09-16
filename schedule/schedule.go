@@ -1,7 +1,6 @@
 package schedule
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -84,6 +83,20 @@ func formatLesson(s string) []Lesson {
 
 	lStrings := strings.Split(s, "\n\n")
 
+	if len(lStrings) > 2 {
+		for i, lesson := range lStrings {
+			if !strings.Contains(lesson, "лек.") && !strings.Contains(lesson, "пр.") && lesson != " " {
+				if i == len(lStrings)-1 {
+					lStrings[i-1] += "\n" + lStrings[i]
+					lStrings = lStrings[:len(lStrings)-1]
+				} else {
+					lStrings[i-1] += "\n" + lStrings[i]
+					lStrings = append(lStrings[:i], lStrings[i+1:]...)
+				}
+			}
+		}
+	}
+
 	switch len(lStrings) == 1 {
 	case true:
 		length = 1
@@ -132,7 +145,6 @@ func formatLesson(s string) []Lesson {
 			if n%4 == 0 {
 				k = strings.IndexRune(lesson, '\n')
 				sub := lesson[:k]
-				fmt.Println(sub)
 				if strings.Contains(sub, "под.") {
 					if strings.Contains(sub, "1") {
 						lessons[i].SubGroup = "1"
@@ -146,18 +158,21 @@ func formatLesson(s string) []Lesson {
 			}
 
 			k = strings.IndexRune(lesson, '\n')
-			lessons[i].Teacher = lesson[:k]
-			lesson = lesson[k+1:]
+			if k != -1 && !strings.ContainsAny(lesson[:k], "0123456789") {
+				lessons[i].Teacher = lesson[:k]
+				lesson = lesson[k+1:]
+			}
 
 			k = strings.IndexRune(lesson, '\n')
-			lessons[i].Classroom = lesson[:k]
-			lesson = lesson[k+1:]
+			if k != -1 {
+				lessons[i].Classroom = lesson[:k]
+				lesson = lesson[k+1:]
+			}
 		}
 	}
 
 	return lessons
 }
-
 func formatAndsetTime(number int, t, d Day, lessons []Lesson) []Lesson {
 	lessons = formatLesson(d.Lessons[number].Data)
 	for i := range lessons {

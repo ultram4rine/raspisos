@@ -412,7 +412,9 @@ func makeLessonMsg(address, day string, xmlschedule schedule.XMLStruct) (msgtext
 					msgtext += "*Подгруппа:* " + l[j].SubGroup + "\n"
 				}
 
-				msgtext += "*Преподаватель:* " + l[j].Teacher + "\n"
+				if l[j].Teacher != "" {
+					msgtext += "*Преподаватель:* " + l[j].Teacher + "\n"
+				}
 
 				msgtext += "*Аудитория:* " + l[j].Classroom + "\n\n"
 			} else {
